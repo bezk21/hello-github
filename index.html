@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CID 投放数据看板</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root{--bg:#f5f7fa;--card:#fff;--ink:#1f2937;--sub:#6b7280;--accent:#e34d59;--blue:#2f6fed;--green:#12a05c;}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC","Microsoft YaHei",sans-serif;}
+  body{background:var(--bg);color:var(--ink);padding:24px;}
+  h1{font-size:22px;margin-bottom:4px;} .sub{color:var(--sub);font-size:13px;margin-bottom:20px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px;}
+  .kpi{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .kpi .v{font-size:22px;font-weight:700;margin-top:6px;} .kpi .l{font-size:12px;color:var(--sub);}
+  .row{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px;}
+  .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .card h2{font-size:15px;margin-bottom:10px;}
+  .chart{width:100%;height:340px;} .chart-sm{height:300px;}
+  footer{margin-top:18px;color:var(--sub);font-size:12px;text-align:center;}
+</style>
+</head>
+<body>
+<h1>CID 投放数据看板</h1>
+<div class="sub">数据周期：2025-07-21 ~ 2026-11-10（442 天 · 88,651 行明细聚合） · 更新时间：2026-11-11 19:15</div>
+<div class="grid" id="kpis"></div>
+<div class="row"><div class="card"><h2>每周消耗 vs GMV 趋势</h2><div id="c1" class="chart"></div></div></div>
+<div class="row"><div class="card"><h2>点位对比（Feeds / SEM）</h2><div id="c2" class="chart chart-sm"></div></div></div>
+<div class="row"><div class="card"><h2>TOP 15 达人（按消耗）</h2><div id="c3" class="chart chart-sm"></div></div></div>
+<div class="row"><div class="card"><h2>每周投放效率（CTR / ROI）</h2><div id="c4" class="chart chart-sm"></div></div></div>
+<footer>数据来源：CID投放数据.xlsx（本地周报） · 由 WorkBuddy 聚合生成 · 托管于 GitHub Pages</footer>
+<script>
+const META={from:"2025-07-21",to:"2026-11-10",days:442,rows:88651};
+const BY_WEEK=[
+{"w":"2025-07-21","c":16383.29,"i":847675,"k":79263,"u":14308,"g":79920.0},
+{"w":"2025-07-28","c":26325.65,"i":915831,"k":86480,"u":15482,"g":299718.4},
+{"w":"2025-08-04","c":42106.88,"i":920378,"k":91749,"u":14747,"g":542475.8},
+{"w":"2025-08-11","c":34378.06,"i":752950,"k":63817,"u":10356,"g":423634.8},
+{"w":"2025-08-18","c":29249.51,"i":591219,"k":48556,"u":7654,"g":701207.18},
+{"w":"2025-08-25","c":28274.32,"i":611954,"k":50818,"u":8225,"g":973232.99},
+{"w":"2025-09-01","c":18777.98,"i":492336,"k":41745,"u":7924,"g":390078.0},
+{"w":"2025-09-08","c":25802.52,"i":705329,"k":61819,"u":11440,"g":439193.0},
+{"w":"2025-09-15","c":37819.87,"i":1046977,"k":87933,"u":31569,"g":435360.0},
+{"w":"2025-09-22","c":39417.83,"i":987022,"k":79671,"u":29240,"g":472909.0},
+{"w":"2025-09-29","c":26150.03,"i":639296,"k":53766,"u":12886,"g":209622.0},
+{"w":"2025-10-06","c":35134.82,"i":897899,"k":77614,"u":21964,"g":438766.6},
+{"w":"2025-10-13","c":51803.15,"i":848087,"k":61183,"u":19459,"g":2667349.02},
+{"w":"2025-10-20","c":43578.69,"i":899892,"k":66501,"u":21806,"g":3165352.0},
+{"w":"2025-10-27","c":54024.86,"i":1034999,"k":72216,"u":27680,"g":1791110.96},
+{"w":"2025-11-03","c":52657.53,"i":957455,"k":56322,"u":28077,"g":1471074.0},
+{"w":"2025-11-10","c":50591.06,"i":970630,"k":59103,"u":26597,"g":1544357.97},
+{"w":"2025-11-17","c":34244.79,"i":766409,"k":50247,"u":21246,"g":458094.98},
+{"w":"2025-11-24","c":25571.52,"i":625475,"k":41015,"u":16725,"g":359984.0},
+{"w":"2025-12-01","c":31622.07,"i":754516,"k":50638,"u":18878,"g":356910.0},
+{"w":"2025-12-08","c":33138.95,"i":720153,"k":46622,"u":14928,"g":635868.4},
+{"w":"2025-12-15","c":32647.14,"i":633458,"k":45605,"u":15704,"g":763477.77},
+{"w":"2025-12-22","c":34525.26,"i":668523,"k":47345,"u":15091,"g":619644.0},
+{"w":"2025-12-29","c":41585.54,"i":1039113,"k":89034,"u":19942,"g":692824.79},
+{"w":"2026-01-05","c":38577.26,"i":986496,"k":84049,"u":22394,"g":1123110.39},
+{"w":"2026-01-12","c":76867.17,"i":1812702,"k":141026,"u":47322,"g":896780.0},
+{"w":"2026-01-19","c":25229.02,"i":602000,"k":50704,"u":15714,"g":694855.39},
+{"w":"2026-02-23","c":4529.15,"i":118870,"k":10586,"u":3310,"g":35900.0},
+{"w":"2026-03-02","c":49154.28,"i":1004915,"k":97764,"u":25395,"g":571360.0},
+{"w":"2026-03-09","c":45791.07,"i":1146973,"k":127961,"u":35977,"g":755190.0},
+{"w":"2026-03-16","c":45366.24,"i":1134994,"k":139725,"u":30379,"g":764160.0},
+{"w":"2026-03-23","c":43564.0,"i":963552,"k":99738,"u":22158,"g":750709.98},
+{"w":"2026-03-30","c":47148.26,"i":1021779,"k":103843,"u":23961,"g":751614.99},
+{"w":"2026-04-06","c":45018.9,"i":994576,"k":109202,"u":23990,"g":786301.0},
+{"w":"2026-04-13","c":48455.37,"i":969677,"k":99156,"u":20177,"g":754360.0},
+{"w":"2026-04-20","c":52641.66,"i":1032443,"k":115813,"u":20408,"g":702980.0},
+{"w":"2026-04-27","c":39650.39,"i":880835,"k":110642,"u":17614,"g":515970.0},
+{"w":"2026-05-04","c":41315.42,"i":911751,"k":121170,"u":19112,"g":696760.0},
+{"w":"2026-05-11","c":68860.29,"i":993737,"k":97964,"u":19483,"g":2904948.88},
+{"w":"2026-05-18","c":99551.39,"i":1297901,"k":138070,"u":24638,"g":3338510.91},
+{"w":"2026-05-25","c":97873.94,"i":1273547,"k":141076,"u":22732,"g":3193196.93},
+{"w":"2026-06-01","c":76296.55,"i":1105840,"k":128329,"u":21700,"g":2091789.0},
+{"w":"2026-06-08","c":91162.55,"i":1438141,"k":162825,"u":28949,"g":2177106.95},
+{"w":"2026-06-15","c":68931.13,"i":947394,"k":108828,"u":17502,"g":2738371.96},
+{"w":"2026-06-22","c":60255.41,"i":1140510,"k":141823,"u":24886,"g":606938.0},
+{"w":"2026-06-29","c":47088.19,"i":928916,"k":96933,"u":18188,"g":452638.99},
+{"w":"2026-07-06","c":36435.9,"i":818674,"k":76677,"u":19384,"g":717530.96},
+{"w":"2026-07-13","c":57511.89,"i":1170887,"k":103323,"u":25979,"g":887233.98},
+{"w":"2026-07-20","c":58171.48,"i":1110376,"k":105167,"u":25382,"g":849728.99},
+{"w":"2026-07-27","c":34340.18,"i":718792,"k":66148,"u":16416,"g":876532.0},
+{"w":"2026-08-03","c":93431.26,"i":1635109,"k":140490,"u":33275,"g":1148154.99},
+{"w":"2026-08-10","c":124658.28,"i":1965389,"k":171590,"u":49228,"g":1886954.98},
+{"w":"2026-08-17","c":103338.46,"i":1814033,"k":172892,"u":44444,"g":1835349.98},
+{"w":"2026-08-24","c":102960.92,"i":1649561,"k":157154,"u":38238,"g":1407489.97},
+{"w":"2026-08-31","c":96017.71,"i":1515623,"k":137923,"u":34444,"g":1445804.99},
+{"w":"2026-09-07","c":115897.86,"i":1577961,"k":137781,"u":32910,"g":1559174.98},
+{"w":"2026-09-14","c":114991.72,"i":1698415,"k":138329,"u":31396,"g":1471430.0},
+{"w":"2026-09-21","c":119329.2,"i":1732762,"k":145967,"u":30774,"g":1494460.0},
+{"w":"2026-09-28","c":120353.08,"i":1856830,"k":166064,"u":34755,"g":1321493.0},
+{"w":"2026-10-05","c":134984.64,"i":1867702,"k":172235,"u":34654,"g":1834762.99},
+{"w":"2026-10-12","c":114512.15,"i":1434183,"k":116694,"u":23663,"g":1839340.3},
+{"w":"2026-10-19","c":65912.26,"i":679714,"k":54250,"u":11995,"g":3967810.59},
+{"w":"2026-10-26","c":84400.49,"i":937345,"k":68162,"u":14104,"g":2552726.66},
+{"w":"2026-11-02","c":74734.74,"i":806999,"k":61032,"u":11651,"g":3382978.43},
+{"w":"2026-11-09","c":24601.41,"i":238206,"k":16539,"u":3595,"g":1672430.14}
+];
+const BY_POINT=[
+{"n":"Feeds","c":2153965.63,"i":39215100,"k":4216843,"u":929918,"g":45704619.81},
+{"n":"SEM","c":1581756.96,"i":28048586,"k":1927863,"u":524286,"g":33682487.15}
+];
+const TOP_KOL=[
+{"n":"Corrie_white_","c":220472.17,"g":4264546.99},
+{"n":"卤蛋阿欣","c":209236.7,"g":5587430.36},
+{"n":"ForU_Style","c":149540.58,"g":3264773.66},
+{"n":"时尚|镜语","c":130596.27,"g":2386471.03},
+{"n":"COACH郑州大卫城JEFFREY","c":120276.72,"g":2017557.98},
+{"n":"新沙洞大头","c":86181.6,"g":1878226.87},
+{"n":"西伯利亚水晶公主","c":86174.4,"g":2385269.96},
+{"n":"ViVi明星衣橱新","c":83925.78,"g":1332271.1},
+{"n":"Coach岳阳百盛Lillian","c":82771.57,"g":1349428.4},
+{"n":"橘子Fashion新","c":78884.01,"g":1390183.16},
+{"n":"小彤今天瘦了没","c":78117.46,"g":765108.9},
+{"n":"阿月半月","c":77479.95,"g":1319238.1},
+{"n":"Nico妮妮","c":73429.68,"g":1254125.09},
+{"n":"艺只喵喵","c":65958.29,"g":1792127.94},
+{"n":"Coach北京APM-Eva","c":64209.51,"g":1376646.09}
+];
+const fmt = n => n>=10000 ? (n/10000).toFixed(1)+'万' : n.toLocaleString('zh-CN');
+const yuan = n => '¥'+fmt(Math.round(n));
+const tot = BY_WEEK.reduce((a,x)=>({cost:a.cost+x.c,imp:a.imp+x.i,clk:a.clk+x.k,crowd:a.crowd+x.u,gmv:a.gmv+x.g}),{cost:0,imp:0,clk:0,crowd:0,gmv:0});
+const wk = BY_WEEK[BY_WEEK.length-1];
+const kpis=[
+ ['全期总消耗',yuan(tot.cost)],['全期总GMV',yuan(tot.gmv)],['整体ROI',(tot.gmv/tot.cost).toFixed(2)],
+ ['总展现量',fmt(tot.imp)],['总点击量',fmt(tot.clk)],['平均CTR',(tot.clk/tot.imp*100).toFixed(2)+'%'],
+ ['平均CPC','¥'+(tot.cost/tot.clk).toFixed(2)],['新增深度种草',fmt(tot.crowd)],['最近1周消耗',yuan(wk?wk.c:0)],['最近1周GMV',yuan(wk?wk.g:0)]
+];
+document.getElementById('kpis').innerHTML = kpis.map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div></div>`).join('');
+const mk=(id,opt)=>{const c=echarts.init(document.getElementById(id));c.setOption(opt);window.addEventListener('resize',()=>c.resize());};
+mk('c1',{tooltip:{trigger:'axis'},legend:{data:['消耗','GMV']},
+ xAxis:{type:'category',data:BY_WEEK.map(x=>x.w.slice(5))},
+ yAxis:[{type:'value',name:'消耗(元)'},{type:'value',name:'GMV(元)'}],
+ series:[{name:'消耗',type:'bar',itemStyle:{color:'#e34d59'},data:BY_WEEK.map(x=>x.c)},
+  {name:'GMV',type:'line',smooth:true,yAxisIndex:1,itemStyle:{color:'#2f6fed'},data:BY_WEEK.map(x=>x.g)}]});
+mk('c2',{tooltip:{trigger:'axis'},legend:{},xAxis:{type:'category',data:BY_POINT.map(x=>x.n)},
+ yAxis:[{type:'value',name:'金额(元)'},{type:'value',name:'ROI'}],
+ series:[{name:'消耗',type:'bar',itemStyle:{color:'#e34d59'},data:BY_POINT.map(x=>x.c)},
+  {name:'GMV',type:'bar',itemStyle:{color:'#2f6fed'},data:BY_POINT.map(x=>x.g)},
+  {name:'ROI',type:'line',yAxisIndex:1,itemStyle:{color:'#12a05c'},data:BY_POINT.map(x=>+(x.g/x.c).toFixed(2))}]});
+mk('c3',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},grid:{left:150},
+ xAxis:{type:'value',name:'消耗(元)'},yAxis:{type:'category',data:TOP_KOL.map(x=>x.n).reverse()},
+ series:[{name:'消耗',type:'bar',itemStyle:{color:'#e34d59'},data:TOP_KOL.map(x=>x.c).reverse(),
+  label:{show:true,position:'right',formatter:p=>fmt(p.value)}}]});
+mk('c4',{tooltip:{trigger:'axis'},legend:{data:['CTR','ROI']},
+ xAxis:{type:'category',data:BY_WEEK.map(x=>x.w.slice(5))},
+ yAxis:[{type:'value',name:'CTR(%)'},{type:'value',name:'ROI'}],
+ series:[{name:'CTR',type:'line',smooth:true,itemStyle:{color:'#f59e0b'},data:BY_WEEK.map(x=>x.i? +(x.k/x.i*100).toFixed(2):0)},
+  {name:'ROI',type:'line',smooth:true,yAxisIndex:1,itemStyle:{color:'#12a05c'},data:BY_WEEK.map(x=>x.c? +(x.g/x.c).toFixed(2):0)}]});
+</script>
+</body>
+</html>
