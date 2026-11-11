@@ -20,6 +20,9 @@ body{margin:0;background:#f2f3f7;color:var(--text);font-family:"PingFang SC","Mi
 .xw-btn.primary:hover{opacity:.88;color:#fff}
 .xw-savetip{font-size:11.5px;color:var(--muted);width:100%;margin-top:4px}
 .xw-savetip b{color:var(--green);font-weight:600}
+.sync-badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;margin-right:6px}
+.sync-badge.ok{background:#e8f9ef;color:var(--green)}
+.sync-badge.off{background:#fff4e5;color:var(--orange)}
 .xw-tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
 .xw-tab{padding:9px 18px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;user-select:none}
 .xw-tab:hover{color:var(--text)}
@@ -68,7 +71,7 @@ input.xw-num:focus{outline:none;border-color:var(--accent)}
     <button class="xw-btn" data-act="reset">↺ 重置示例</button>
     <input type="file" id="xw-file" accept=".xlsx,.xls" style="display:none">
     <input type="file" id="xw-json" accept=".json" style="display:none">
-    <div class="xw-savetip">示例数据为占位符，上传 Excel 即替换为真实数据 · 在线编辑<b>自动保存在本浏览器</b>（localStorage），换设备/清缓存前请先「导出Excel」或「备份文件」留档</div>
+    <div class="xw-savetip" id="xw-syncinfo">正在检测本地数据…</div>
   </div>
   <div class="xw-tabs" id="xw-tabs">
     <div class="xw-tab on" data-tab="0">① 总控台</div>
@@ -80,9 +83,10 @@ input.xw-num:focus{outline:none;border-color:var(--accent)}
   <section id="xw-p1" style="display:none"></section>
   <section id="xw-p2" style="display:none"></section>
   <section id="xw-p3" style="display:none"></section>
-  <div class="footer-note">小红书投流工作台 v1.0 · 数据全部保存在你自己的浏览器与 Excel 文件中，不上传任何服务器</div>
+  <div class="footer-note">小红书投流工作台 v1.2 · 本地底表定时同步（sync.py → data.js）· 数据不上传任何服务器</div>
   <div id="xw-toast"></div>
 </div>
+<script src="data.js"></script>
 <script>
 (function(){
 var $=function(s){return document.querySelector(s)};
@@ -129,7 +133,35 @@ var STATUS=['未开始','进行中','已完成','已延期'];
 var state=load();
 var activeTab=0,acctFilter='全部';
 function clone(o){return JSON.parse(JSON.stringify(o))}
-function load(){try{var s=localStorage.getItem(LS);if(s){var d=JSON.parse(s);if(d&&d.kpi&&d.trend&&d.accounts&&d.finance&&d.todos)return d}}catch(e){}return clone(DEFAULT)}
+function load(){
+ var local=null;
+ try{var s=localStorage.getItem(LS);if(s){var d=JSON.parse(s);if(d&&d.kpi&&d.trend&&d.accounts&&d.finance&&d.todos)local=d}}catch(e){}
+ var base=local?local:clone(DEFAULT);
+ var remote=window.WB_DATA;
+ var ver=remote&&(remote.fingerprint||remote.updatedAt);
+ if(remote&&ver&&ver!==(base.__syncVer||'')){
+   (remote.tables||[]).forEach(function(t){
+     if(t==='finance'){if(remote.finance&&remote.finance.projects)base.finance=clone(remote.finance)}
+     else if(remote[t])base[t]=clone(remote[t]);
+   });
+   base.__syncAt=remote.updatedAt;
+   base.__syncVer=ver;
+   base.__source=(remote.sourceFiles||[]).join('、');
+   try{localStorage.setItem(LS,JSON.stringify(base))}catch(e){}
+ }
+ return base;
+}
+function renderSyncInfo(){
+ var el=$('#xw-syncinfo');if(!el)return;
+ var remote=window.WB_DATA,tip='';
+ if(remote&&remote.updatedAt){
+   tip='<span class="sync-badge ok">● 本地底表已同步</span> 最近同步 <b>'+esc(remote.updatedAt.replace('T',' '))+'</b> · 来源 '+esc((remote.sourceFiles||[]).join('、')||'data/')+' · 本次覆盖板块 '+((remote.tables||[]).length)+' 个';
+ }else{
+   tip='<span class="sync-badge off">● 未接入本地底表</span> 当前为示例数据或手动导入数据';
+ }
+ tip+=' <span style="margin-left:8px">在线编辑自动保存在本浏览器；仅当底表产出新版本时才覆盖对应板块。换设备/清缓存前请先「导出Excel」或「备份文件」留档</span>';
+ el.innerHTML=tip;
+}
 function save(){try{localStorage.setItem(LS,JSON.stringify(state));return true}catch(e){return false}}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function trim2(x){return (+x.toFixed(2)).toString()}
@@ -240,7 +272,7 @@ function renderTab3(){var el=$('#xw-p3');
 function renderAll(){
  $('#xw-tabs').querySelectorAll('.xw-tab').forEach(function(t,i){t.className='xw-tab'+(i===activeTab?' on':'')});
  for(var i=0;i<4;i++)$('#xw-p'+i).style.display=i===activeTab?'':'none';
- renderTab0();renderTab1();renderTab2();renderTab3();
+ renderTab0();renderTab1();renderTab2();renderTab3();renderSyncInfo();
 }
 function renderSave(){save();renderAll()}
 /* ---------- Excel ---------- */
@@ -329,7 +361,7 @@ root.addEventListener('click',function(e){
  else if(a==='template')doExport(true);
  else if(a==='backup')doBackup();
  else if(a==='restore')$('#xw-json').click();
- else if(a==='reset'){if(confirm('确定恢复为示例数据？当前修改将丢失')){state=clone(DEFAULT);renderSave();toast('已重置为示例数据')}}
+ else if(a==='reset'){if(confirm('确定恢复为示例数据？当前修改将丢失')){var k=state.__syncAt,v=state.__syncVer,s=state.__source;state=clone(DEFAULT);if(k){state.__syncAt=k;state.__syncVer=v;state.__source=s}renderSave();toast('已重置为示例数据')}}
 });
 root.addEventListener('focusin',function(e){var td=e.target.closest('td[contenteditable]');if(!td)return;
  var t=td.dataset.t,i=+td.dataset.i,k=td.dataset.k;var row=getArr(t)[i];if(!row)return;
