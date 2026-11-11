@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书投流工作台</title>
+<style>
+:root{--accent:#ff2442;--blue:#3b6ef0;--green:#07c160;--orange:#ff9f2e;--red:#f5483b;--text:#1f2329;--muted:#8a8f99;--line:#e9eaf0;--card:#ffffff;--soft:#f6f7fa}
+*{box-sizing:border-box}
+body{margin:0;background:#f2f3f7;color:var(--text);font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;font-size:13px}
+#xw{max-width:1280px;margin:0 auto;padding:20px 18px 40px}
+*{box-sizing:border-box}
+.xw-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+.xw-title{font-size:18px;font-weight:700}
+.xw-title small{font-weight:400;color:var(--muted);font-size:12px;margin-left:8px}
+.xw-spacer{flex:1}
+.xw-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12.5px;color:var(--text);white-space:nowrap}
+.xw-btn:hover{border-color:var(--accent);color:var(--accent)}
+.xw-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.xw-btn.primary:hover{opacity:.88;color:#fff}
+.xw-savetip{font-size:11.5px;color:var(--muted);width:100%;margin-top:4px}
+.xw-savetip b{color:var(--green);font-weight:600}
+.xw-tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.xw-tab{padding:9px 18px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;user-select:none}
+.xw-tab:hover{color:var(--text)}
+.xw-tab.on{color:var(--accent);border-color:var(--accent);font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:10px;margin-bottom:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card .k{color:var(--muted);font-size:12px}
+.card .v{font-size:21px;font-weight:700;margin:4px 0 2px}
+.card .t{color:var(--muted);font-size:11.5px}
+.pb{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin-top:8px}
+.pb>i{display:block;height:100%;border-radius:4px;transition:width .3s}
+table.xw-t{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px}
+.xw-t th{background:var(--soft);text-align:left;padding:8px 10px;font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+.xw-t td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.xw-t tr:last-child td{border-bottom:none}
+td[contenteditable]{cursor:text;outline:none;min-width:56px}
+td[contenteditable]:hover{background:#fff7f8}
+td[contenteditable]:focus{background:#fff0f2;box-shadow:inset 0 0 0 1.5px var(--accent);border-radius:4px}
+.sec{font-weight:700;margin:16px 0 8px;font-size:13.5px}
+.sec small{color:var(--muted);font-weight:400;margin-left:8px}
+.x-btn{cursor:pointer;color:var(--muted);border:none;background:none;font-size:13px;padding:2px 4px}
+.x-btn:hover{color:var(--red)}
+select.xw-s{border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--card);color:var(--text)}
+.tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11.5px}
+.tag.g{background:#e8f9ef;color:var(--green)}.tag.o{background:#fff4e5;color:var(--orange)}.tag.r{background:#ffeceb;color:var(--red)}.tag.b{background:#eef3ff;color:var(--blue)}.tag.n{background:var(--soft);color:var(--muted)}
+#xw-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:rgba(20,22,26,.92);color:#fff;padding:9px 20px;border-radius:20px;font-size:12.5px;display:none;z-index:99;max-width:80%;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.chart-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto}
+.table-wrap{overflow-x:auto}
+input.xw-num{border:1px solid var(--line);border-radius:8px;padding:5px 10px;width:150px;font-size:14px;color:var(--text)}
+input.xw-num:focus{outline:none;border-color:var(--accent)}
+.hint{color:var(--muted);font-size:11.5px;margin:2px 0 10px}
+.filterbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.footer-note{color:var(--muted);font-size:11.5px;text-align:center;margin-top:24px;line-height:1.8}
+</style>
+</head>
+<body>
+<div id="xw">
+  <div class="xw-head">
+    <div class="xw-title">小红书投流工作台<small>四板块 · Excel 双向同步 · 在线编辑</small></div>
+    <div class="xw-spacer"></div>
+    <button class="xw-btn primary" data-act="import">📤 导入Excel</button>
+    <button class="xw-btn" data-act="export">📥 导出Excel</button>
+    <button class="xw-btn" data-act="template">📄 下载模板</button>
+    <button class="xw-btn" data-act="backup">💾 备份文件</button>
+    <button class="xw-btn" data-act="restore">♻️ 恢复备份</button>
+    <button class="xw-btn" data-act="reset">↺ 重置示例</button>
+    <input type="file" id="xw-file" accept=".xlsx,.xls" style="display:none">
+    <input type="file" id="xw-json" accept=".json" style="display:none">
+    <div class="xw-savetip">示例数据为占位符，上传 Excel 即替换为真实数据 · 在线编辑<b>自动保存在本浏览器</b>（localStorage），换设备/清缓存前请先「导出Excel」或「备份文件」留档</div>
+  </div>
+  <div class="xw-tabs" id="xw-tabs">
+    <div class="xw-tab on" data-tab="0">① 总控台</div>
+    <div class="xw-tab" data-tab="1">② 投放数据</div>
+    <div class="xw-tab" data-tab="2">③ 财务</div>
+    <div class="xw-tab" data-tab="3">④ 待办</div>
+  </div>
+  <section id="xw-p0"></section>
+  <section id="xw-p1" style="display:none"></section>
+  <section id="xw-p2" style="display:none"></section>
+  <section id="xw-p3" style="display:none"></section>
+  <div class="footer-note">小红书投流工作台 v1.0 · 数据全部保存在你自己的浏览器与 Excel 文件中，不上传任何服务器</div>
+  <div id="xw-toast"></div>
+</div>
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)};
+var LS='xhs_wb_v1';
+var DEFAULT={
+ kpi:[
+  {指标:'AIPS人群(万)',当期值:1280,目标值:1500},
+  {指标:'TI人群(万)',当期值:860,目标值:1000},
+  {指标:'搜索量(万)',当期值:45.6,目标值:60},
+  {指标:'小红星UV(万)',当期值:12.4,目标值:15},
+  {指标:'小红星GMV(万元)',当期值:386,目标值:500},
+  {指标:'小红星ROI',当期值:2.8,目标值:3}
+ ],
+ trend:[
+  {月份:'7月',搜索量:32,小红星GMV:260},
+  {月份:'8月',搜索量:38,小红星GMV:305},
+  {月份:'9月',搜索量:41,小红星GMV:342},
+  {月份:'10月',搜索量:45.6,小红星GMV:386}
+ ],
+ accounts:[
+  {子账户:'账户A-Retail',消耗:85000,展现:1250000,点击:38500,互动量:9200,加购:1150,成交GMV:238000},
+  {子账户:'账户B-Outlet',消耗:62000,展现:980000,点击:31200,互动量:6800,加购:820,成交GMV:148000},
+  {子账户:'账户C-品牌词',消耗:28000,展现:420000,点击:18600,互动量:3900,加购:560,成交GMV:96500}
+ ],
+ finance:{总预算:500000,projects:[
+  {项目:'常规种草-Retail',预算:300000,已消耗:185000},
+  {项目:'常规种草-Outlet',预算:200000,已消耗:92000}
+ ]},
+ todos:[
+  {流程:'财务充值',事项:'制作排期（确认充值时间点）',计划时间点:'每月25日前',负责人:'投放',状态:'进行中',备注:''},
+  {流程:'财务充值',事项:'内部下单',计划时间点:'每月28日前',负责人:'投放',状态:'未开始',备注:''},
+  {流程:'财务充值',事项:'PO申请提交',计划时间点:'次月3日前',负责人:'财务',状态:'未开始',备注:''},
+  {流程:'财务充值',事项:'客户审计填写实际消耗点',计划时间点:'次月5日前',负责人:'客户侧',状态:'未开始',备注:''}
+ ]
+};
+var CFG={
+ kpi:{cols:[{key:'指标'},{key:'当期值',num:1},{key:'目标值',num:1}]},
+ trend:{cols:[{key:'月份'},{key:'搜索量',num:1},{key:'小红星GMV',num:1}]},
+ accounts:{cols:[{key:'子账户'},{key:'消耗',num:1},{key:'展现',num:1},{key:'点击',num:1},{key:'互动量',num:1},{key:'加购',num:1},{key:'成交GMV',num:1}]},
+ finance:{cols:[{key:'项目'},{key:'预算',num:1},{key:'已消耗',num:1}]},
+ todos:{cols:[{key:'流程'},{key:'事项'},{key:'计划时间点'},{key:'负责人'},{key:'状态'},{key:'备注'}]}
+};
+var STATUS=['未开始','进行中','已完成','已延期'];
+var state=load();
+var activeTab=0,acctFilter='全部';
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function load(){try{var s=localStorage.getItem(LS);if(s){var d=JSON.parse(s);if(d&&d.kpi&&d.trend&&d.accounts&&d.finance&&d.todos)return d}}catch(e){}return clone(DEFAULT)}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state));return true}catch(e){return false}}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function trim2(x){return (+x.toFixed(2)).toString()}
+function fmt(n){n=+n;if(!isFinite(n))return '-';var a=Math.abs(n);if(a>=1e8)return trim2(n/1e8)+'亿';if(a>=1e4)return trim2(n/1e4)+'万';return n.toLocaleString('zh-CN',{maximumFractionDigits:2})}
+function pct(x){if(!isFinite(x))return '-';return (x*100).toFixed(1)+'%'}
+function parseNum(s){s=String(s).replace(/[,，¥￥\s]/g,'');var m=1;if(/亿$/.test(s)){m=1e8;s=s.slice(0,-1)}else if(/万$/.test(s)){m=1e4;s=s.slice(0,-1)}var n=parseFloat(s);return isFinite(n)?n*m:0}
+function niceMax(v){if(!(v>0))return 1;var p=Math.pow(10,Math.floor(Math.log10(v)));var m=v/p;var f=m<=1?1:m<=2?2:m<=5?5:10;return f*p}
+function getArr(t){return t==='finance'?state.finance.projects:state[t]}
+function pbar(ratio,invert){var w=Math.min(100,Math.max(0,ratio*100));var c=invert?(ratio>1?'var(--red)':ratio>0.8?'var(--orange)':'var(--blue)'):(ratio>=1?'var(--green)':ratio>=0.7?'var(--blue)':'var(--orange)');return '<div class="pb"><i style="width:'+w+'%;background:'+c+'"></i></div>'}
+var toastT;function toast(m){var t=$('#xw-toast');t.textContent=m;t.style.display='block';clearTimeout(toastT);toastT=setTimeout(function(){t.style.display='none'},2800)}
+function statusSelect(t,i,v){var h='<select class="xw-s" data-t="'+t+'" data-i="'+i+'">';STATUS.forEach(function(s){h+='<option'+(s===v?' selected':'')+'>'+s+'</option>'});return h+'</select>'}
+function tableHTML(tname,rows,opts){opts=opts||{};var cols=CFG[tname].cols;
+ var h='<div class="table-wrap"><table class="xw-t"><thead><tr>'+cols.map(function(c){return '<th>'+c.key+'</th>'}).join('');
+ if(opts.extra)h+=opts.extra.map(function(e){return '<th>'+e+'</th>'}).join('');
+ h+='<th style="width:30px"></th></tr></thead><tbody>';
+ rows.forEach(function(r,pos){var gi=opts.idx?opts.idx(r):pos;
+  var st=(tname==='todos'&&r.状态==='已完成')?' style="opacity:.55"':'';
+  h+='<tr'+st+'>'+cols.map(function(c){var v=r[c.key];
+   if(tname==='todos'&&c.key==='状态')return '<td>'+statusSelect(tname,gi,v)+'</td>';
+   var disp=c.num?fmt(v):esc(v==null?'':v);
+   return '<td contenteditable data-t="'+tname+'" data-i="'+gi+'" data-k="'+c.key+'" data-num="'+(c.num?1:0)+'">'+disp+'</td>';
+  }).join('');
+  if(opts.extraFn)h+=opts.extraFn(r);
+  h+='<td><button class="x-btn" data-del="'+tname+'" data-i="'+gi+'" title="删除行">✕</button></td></tr>';
+ });
+ if(opts.footer)h+=opts.footer(rows);
+ h+='</tbody></table></div><button class="xw-btn" data-add="'+tname+'">＋ 添加一行</button>';
+ return h;
+}
+/* ---------- 图表 ---------- */
+function lineChartSVG(labels,series){var W=660,H=280,ml=58,mr=14,mt=36,mb=42,iw=W-ml-mr,ih=H-mt-mb;
+ var max=1e-9;series.forEach(function(s){s.data.forEach(function(v){if(v>max)max=v})});max=niceMax(max);
+ var n=labels.length;var X=function(i){return ml+(n<2?iw/2:i*iw/(n-1))};var Y=function(v){return mt+ih-v/max*ih};
+ var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:520px" xmlns="http://www.w3.org/2000/svg">';
+ for(var g=0;g<=4;g++){var v=max*g/4,y=Y(v);s+='<line x1="'+ml+'" y1="'+y+'" x2="'+(W-mr)+'" y2="'+y+'" stroke="var(--line)"/><text x="'+(ml-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="var(--muted)">'+fmt(v)+'</text>'}
+ labels.forEach(function(lb,i){s+='<text x="'+X(i)+'" y="'+(H-16)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+esc(lb)+'</text>'});
+ series.forEach(function(se,si){var pts=se.data.map(function(v,i){return X(i)+','+Y(v)}).join(' ');
+  s+='<polyline points="'+pts+'" fill="none" stroke="'+se.color+'" stroke-width="2.2" stroke-linejoin="round"/>';
+  se.data.forEach(function(v,i){s+='<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="3.4" fill="#fff" stroke="'+se.color+'" stroke-width="2"><title>'+esc(labels[i])+' · '+esc(se.name)+'：'+fmt(v)+'</title></circle>'});
+  s+='<rect x="'+(ml+si*170)+'" y="10" width="10" height="10" rx="2" fill="'+se.color+'"/><text x="'+(ml+si*170+16)+'" y="19" font-size="11" fill="var(--text)">'+esc(se.name)+'</text>';
+ });
+ return s+'</svg>';
+}
+function barChartSVG(labels,s1,s2){var W=660,H=280,ml=58,mr=14,mt=36,mb=52,iw=W-ml-mr,ih=H-mt-mb;
+ var max=1e-9;[s1,s2].forEach(function(s){s.data.forEach(function(v){if(v>max)max=v})});max=niceMax(max);
+ var n=Math.max(labels.length,1),slot=iw/n,bw=Math.min(34,slot*0.3);var Y=function(v){return mt+ih-v/max*ih};
+ var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:520px" xmlns="http://www.w3.org/2000/svg">';
+ for(var g=0;g<=4;g++){var v=max*g/4,y=Y(v);s+='<line x1="'+ml+'" y1="'+y+'" x2="'+(W-mr)+'" y2="'+y+'" stroke="var(--line)"/><text x="'+(ml-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="var(--muted)">'+fmt(v)+'</text>'}
+ labels.forEach(function(lb,i){var cx=ml+slot*(i+0.5);
+  [[s1,cx-bw-2],[s2,cx+2]].forEach(function(pair){var se=pair[0],x=pair[1],v=se.data[i]||0,yy=Y(v);
+   s+='<rect x="'+x+'" y="'+yy+'" width="'+bw+'" height="'+(mt+ih-yy)+'" rx="3" fill="'+se.color+'"><title>'+esc(lb)+' · '+esc(se.name)+'：'+fmt(v)+'</title></rect>'});
+  var short=lb.length>9?lb.slice(0,8)+'…':lb;
+  s+='<text x="'+cx+'" y="'+(H-16)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+esc(short)+'</text>';
+ });
+ [s1,s2].forEach(function(se,si){s+='<rect x="'+(ml+si*130)+'" y="10" width="10" height="10" rx="2" fill="'+se.color+'"/><text x="'+(ml+si*130+16)+'" y="19" font-size="11" fill="var(--text)">'+esc(se.name)+'</text>'});
+ return s+'</svg>';
+}
+/* ---------- 四个板块 ---------- */
+function renderTab0(){var el=$('#xw-p0');
+ var cards=state.kpi.map(function(k){var r=(+k.目标值)?(+k.当期值)/(+k.目标值):0;
+  var tag=r>=1?'<span class="tag g">已达标</span>':r>=0.7?'<span class="tag b">进行中</span>':'<span class="tag o">待提升</span>';
+  return '<div class="card"><div class="k">'+esc(k.指标)+' '+tag+'</div><div class="v">'+fmt(k.当期值)+'</div><div class="t">目标 '+fmt(k.目标值)+' · 达成 '+pct(r)+'</div>'+pbar(r)+'</div>';
+ }).join('');
+ el.innerHTML='<div class="cards">'+cards+'</div>'
+ +'<div class="sec">品牌指标明细<small>点击单元格直接编辑，回车/移开自动保存</small></div>'+tableHTML('kpi',state.kpi)
+ +'<div class="sec">搜索量 & 小红星GMV 趋势</div><div class="chart-box" id="xw-trend"></div>'
+ +'<div class="sec">趋势数据<small>编辑后图表自动更新</small></div>'+tableHTML('trend',state.trend);
+ $('#xw-trend').innerHTML=lineChartSVG(state.trend.map(function(r){return String(r.月份)}),[
+  {name:'搜索量(万)',color:'var(--blue)',data:state.trend.map(function(r){return +r.搜索量||0})},
+  {name:'小红星GMV(万元)',color:'var(--accent)',data:state.trend.map(function(r){return +r.小红星GMV||0})}
+ ]);
+}
+function renderTab1(){var el=$('#xw-p1');
+ var names=[];state.accounts.forEach(function(r){if(names.indexOf(r.子账户)<0)names.push(r.子账户)});
+ if(acctFilter!=='全部'&&names.indexOf(acctFilter)<0)acctFilter='全部';
+ var opts='<option'+(acctFilter==='全部'?' selected':'')+'>全部</option>'+names.map(function(n){return '<option'+(n===acctFilter?' selected':'')+'>'+esc(n)+'</option>'}).join('');
+ var rows=state.accounts.filter(function(r){return acctFilter==='全部'||r.子账户===acctFilter});
+ var idx=function(r){return state.accounts.indexOf(r)};
+ var extraFn=function(r){var c=+r.消耗||0,clk=+r.点击||0,imp=+r.展现||0,inter=+r.互动量||0,gmv=+r.成交GMV||0;
+  return '<td>'+(imp?pct(clk/imp):'-')+'</td><td>'+(clk?fmt(c/clk):'-')+'</td><td>'+(inter?fmt(c/inter):'-')+'</td><td>'+(c?(gmv/c).toFixed(2):'-')+'</td>'};
+ var footer=function(rs){var S=function(k){return rs.reduce(function(a,r){return a+(+r[k]||0)},0)};
+  var c=S('消耗'),imp=S('展现'),clk=S('点击'),inter=S('互动量'),cart=S('加购'),gmv=S('成交GMV');
+  return '<tr style="background:var(--soft);font-weight:600"><td>合计</td><td>'+fmt(c)+'</td><td>'+fmt(imp)+'</td><td>'+fmt(clk)+'</td><td>'+fmt(inter)+'</td><td>'+fmt(cart)+'</td><td>'+fmt(gmv)+'</td><td>'+(imp?pct(clk/imp):'-')+'</td><td>'+(clk?fmt(c/clk):'-')+'</td><td>'+(inter?fmt(c/inter):'-')+'</td><td>'+(c?(gmv/c).toFixed(2):'-')+'</td><td></td></tr>'};
+ el.innerHTML='<div class="filterbar">筛选子账户：<select class="xw-s" id="xw-filter">'+opts+'</select><span class="hint">共 '+rows.length+' 个账户</span></div>'
+ +'<div class="chart-box" id="xw-accchart"></div><div style="height:12px"></div>'
+ +tableHTML('accounts',rows,{extra:['点击率','CPC','CPE','ROI'],extraFn:extraFn,footer:footer,idx:idx});
+ $('#xw-accchart').innerHTML=barChartSVG(rows.map(function(r){return String(r.子账户)}),
+  {name:'消耗',color:'var(--accent)',data:rows.map(function(r){return +r.消耗||0})},
+  {name:'成交GMV',color:'var(--blue)',data:rows.map(function(r){return +r.成交GMV||0})});
+}
+function renderTab2(){var el=$('#xw-p2');var f=state.finance;
+ var spent=f.projects.reduce(function(a,p){return a+(+p.已消耗||0)},0);
+ var budget=+f.总预算||0,remain=budget-spent,ratio=budget?spent/budget:0;
+ el.innerHTML='<div class="cards">'
+ +'<div class="card"><div class="k">当月总预算（元）</div><div style="margin-top:6px"><input class="xw-num" id="xw-budget" type="text" value="'+budget+'"></div><div class="t" style="margin-top:6px">修改后回车自动保存</div></div>'
+ +'<div class="card"><div class="k">已消耗合计</div><div class="v">'+fmt(spent)+'</div><div class="t">整体进度 '+pct(ratio)+'</div>'+pbar(ratio,true)+'</div>'
+ +'<div class="card"><div class="k">剩余预算</div><div class="v" style="color:'+(remain<0?'var(--red)':'var(--text)')+'">'+fmt(remain)+'</div><div class="t">'+(remain<0?'⚠️ 已超预算':'预算内运行中')+'</div></div>'
+ +'</div><div class="sec">各项目消耗进度<small>点击单元格直接编辑</small></div>'
+ +tableHTML('finance',f.projects,{extra:['消耗进度','剩余'],extraFn:function(p){var b=+p.预算||0,u=+p.已消耗||0,r=b?u/b:0;
+  return '<td style="min-width:130px">'+pbar(r,true)+'<span style="font-size:11px;color:var(--muted)">'+pct(r)+(r>1?' · 超支':'')+'</span></td><td>'+fmt(b-u)+'</td>'}});
+}
+function renderTab3(){var el=$('#xw-p3');
+ var done=state.todos.filter(function(t){return t.状态==='已完成'}).length,total=state.todos.length;
+ el.innerHTML='<div class="sec">当月待办清单<small>已完成 '+done+' / '+total+' · 状态可直接下拉修改</small></div>'
+ +tableHTML('todos',state.todos)
+ +'<div class="hint">默认内置「财务充值流程」四个节点：制作排期时间点 → 内部下单时间点 → PO申请 → 客户审计填写实际消耗点，可自由增删改。</div>';
+}
+function renderAll(){
+ $('#xw-tabs').querySelectorAll('.xw-tab').forEach(function(t,i){t.className='xw-tab'+(i===activeTab?' on':'')});
+ for(var i=0;i<4;i++)$('#xw-p'+i).style.display=i===activeTab?'':'none';
+ renderTab0();renderTab1();renderTab2();renderTab3();
+}
+function renderSave(){save();renderAll()}
+/* ---------- Excel ---------- */
+var xlsxP=null;
+function ensureXLSX(){if(window.XLSX)return Promise.resolve();if(xlsxP)return xlsxP;
+ xlsxP=new Promise(function(res,rej){var sc=document.createElement('script');
+  sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  var to=setTimeout(function(){rej(new Error('timeout'))},10000);
+  sc.onload=function(){clearTimeout(to);window.XLSX?res():rej(new Error('bad'))};
+  sc.onerror=function(){clearTimeout(to);rej(new Error('net'))};
+  document.head.appendChild(sc)});
+ xlsxP.catch(function(){xlsxP=null});return xlsxP;
+}
+var SHEET_MAP=[
+ ['总控台KPI','kpi',function(rows){state.kpi=rows}],
+ ['趋势数据','trend',function(rows){state.trend=rows}],
+ ['投放数据','accounts',function(rows){state.accounts=rows}],
+ ['财务预算','finance',function(rows){var bi=-1;rows.forEach(function(r,i){if(String(r.项目).indexOf('总预算')>=0)bi=i});
+  if(bi>=0){state.finance.总预算=+rows[bi].预算||0;rows.splice(bi,1)}state.finance.projects=rows}],
+ ['待办事项','todos',function(rows){rows.forEach(function(r){if(STATUS.indexOf(r.状态)<0)r.状态='未开始'});state.todos=rows}]
+];
+function doExport(template){ensureXLSX().then(function(){
+ var wb=XLSX.utils.book_new();
+ var add=function(name,tname,rows){var cols=CFG[tname].cols;
+  var aoa=[cols.map(function(c){return c.key})].concat(rows.map(function(r){return cols.map(function(c){return r[c.key]})}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),name)};
+ add('总控台KPI','kpi',state.kpi);
+ add('趋势数据','trend',state.trend);
+ add('投放数据','accounts',state.accounts);
+ var spent=state.finance.projects.reduce(function(a,p){return a+(+p.已消耗||0)},0);
+ add('财务预算','finance',state.finance.projects.concat([{项目:'【当月总预算】',预算:state.finance.总预算,已消耗:spent}]));
+ add('待办事项','todos',state.todos);
+ var d=new Date(),ymd=d.getFullYear()+''+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+ XLSX.writeFile(wb,template?'小红书工作台_数据模板.xlsx':'小红书工作台_'+ymd+'.xlsx');
+ toast(template?'模板已下载，填好数据后用「导入Excel」上传':'Excel 已导出，可作为留档');
+}).catch(function(){alert('Excel 组件加载失败（网络受限）。可改用「备份文件」导出 JSON 留档，联网后再试。')});
+}
+function handleFile(file){ensureXLSX().then(function(){
+ var reader=new FileReader();
+ reader.onload=function(e){try{
+  var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+  var applied=[];
+  wb.SheetNames.forEach(function(name){
+   var hit=null;for(var i=0;i<SHEET_MAP.length;i++){if(name===SHEET_MAP[i][0]||name.indexOf(SHEET_MAP[i][0])>=0){hit=SHEET_MAP[i];break}}
+   if(!hit)return;
+   var cols=CFG[hit[1]].cols;
+   var rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:''});
+   if(!rows.length)return;
+   var headers=rows[0].map(function(h){return String(h).trim()});
+   var idx={};cols.forEach(function(c){var j=headers.indexOf(c.key);if(j>=0)idx[c.key]=j});
+   var data=[];
+   for(var r=1;r<rows.length;r++){var row=rows[r];if(row.every(function(v){return v===''||v==null}))continue;
+    var obj={};cols.forEach(function(c){var v=idx[c.key]!=null?row[idx[c.key]]:'';obj[c.key]=c.num?parseNum(v):String(v)});data.push(obj)}
+   if(data.length){hit[2](data);applied.push(name)}
+  });
+  renderSave();
+  toast(applied.length?'✅ 已导入并更新：'+applied.join('、')+'（已自动保存）':'未匹配到工作表，请使用「下载模板」获取标准格式');
+ }catch(err){alert('文件解析失败：'+err.message)}};
+ reader.readAsArrayBuffer(file);
+}).catch(function(){alert('Excel 组件加载失败（网络受限）。可改用「恢复备份」导入 JSON 文件。')});
+}
+/* ---------- JSON 备份（零依赖兜底） ---------- */
+function downloadBlob(name,text){var b=new Blob([text],{type:'application/json;charset=utf-8'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(u)},1000)}
+function doBackup(){var d=new Date(),ymd=d.getFullYear()+''+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+ downloadBlob('小红书工作台_备份_'+ymd+'.json',JSON.stringify(state,null,2));toast('备份文件已下载（含全部四板块数据）')}
+function handleJson(file){var reader=new FileReader();reader.onload=function(e){try{var d=JSON.parse(e.target.result);
+ if(!d||!d.kpi||!d.trend||!d.accounts||!d.finance||!d.todos)throw new Error('文件结构不符合工作台备份格式');
+ state=d;renderSave();toast('✅ 备份已恢复（已自动保存）');
+ }catch(err){alert('恢复失败：'+err.message)}};reader.readAsText(file,'utf-8')}
+/* ---------- 行操作 ---------- */
+function addRow(t){var defs={kpi:{指标:'新指标',当期值:0,目标值:0},trend:{月份:'新月',搜索量:0,小红星GMV:0},
+ accounts:{子账户:'新账户',消耗:0,展现:0,点击:0,互动量:0,加购:0,成交GMV:0},
+ finance:{项目:'新项目',预算:0,已消耗:0},todos:{流程:'',事项:'新事项',计划时间点:'',负责人:'',状态:'未开始',备注:''}};
+ getArr(t).push(clone(defs[t]));renderSave();toast('已添加一行')}
+function delRow(t,i){getArr(t).splice(i,1);renderSave();toast('已删除')}
+/* ---------- 事件 ---------- */
+var root=$('#xw');
+root.addEventListener('click',function(e){
+ var b=e.target.closest('[data-add]');if(b){addRow(b.dataset.add);return}
+ var d=e.target.closest('[data-del]');if(d){delRow(d.dataset.del,+d.dataset.i);return}
+ var tab=e.target.closest('.xw-tab');if(tab){activeTab=+tab.dataset.tab;renderAll();return}
+ var act=e.target.closest('[data-act]');if(!act)return;
+ var a=act.dataset.act;
+ if(a==='import')$('#xw-file').click();
+ else if(a==='export')doExport(false);
+ else if(a==='template')doExport(true);
+ else if(a==='backup')doBackup();
+ else if(a==='restore')$('#xw-json').click();
+ else if(a==='reset'){if(confirm('确定恢复为示例数据？当前修改将丢失')){state=clone(DEFAULT);renderSave();toast('已重置为示例数据')}}
+});
+root.addEventListener('focusin',function(e){var td=e.target.closest('td[contenteditable]');if(!td)return;
+ var t=td.dataset.t,i=+td.dataset.i,k=td.dataset.k;var row=getArr(t)[i];if(!row)return;
+ td.dataset.orig=String(row[k]==null?'':row[k]);
+ if(td.dataset.num==='1')td.textContent=String(row[k]==null?'':row[k]);
+},true);
+root.addEventListener('focusout',function(e){var td=e.target.closest('td[contenteditable]');if(!td||td.dataset.orig==null)return;
+ var raw=td.textContent.trim();var orig=td.dataset.orig;delete td.dataset.orig;
+ if(raw===orig){renderAll();return}
+ var t=td.dataset.t,i=+td.dataset.i,k=td.dataset.k;var row=getArr(t)[i];if(!row)return;
+ row[k]=td.dataset.num==='1'?parseNum(raw):raw;
+ renderSave();
+},true);
+root.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.closest('td[contenteditable]')){e.preventDefault();e.target.blur()}});
+root.addEventListener('change',function(e){
+ var s=e.target.closest('select[data-t]');if(s){var row=getArr(s.dataset.t)[+s.dataset.i];if(row){row.状态=s.value;renderSave();toast('状态已更新并保存')}return}
+ if(e.target.id==='xw-filter'){acctFilter=e.target.value;renderAll();return}
+ if(e.target.id==='xw-budget'){state.finance.总预算=parseNum(e.target.value);renderSave();toast('总预算已更新并保存');return}
+ if(e.target.id==='xw-file'){var f=e.target.files[0];if(f)handleFile(f);e.target.value=''}
+ if(e.target.id==='xw-json'){var j=e.target.files[0];if(j)handleJson(j);e.target.value=''}
+});
+renderAll();
+})();
+</script>
+</body>
+</html>
